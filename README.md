@@ -14,7 +14,7 @@ and makes working with images of multiple frames (e.g. animated GIFs!) much easi
 You can write data to it manually, or pipe data to it from another stream.  You can pipe more than one
 frame of data (as in an animated image), and the `PixelStream` will handle this properly.
 
-### PixelStream(width = 0, height = 0, options = {})
+### `PixelStream(width = 0, height = 0, options = {})`
 
 The constructor for a `PixelStream` accepts three optional arguments: `width`, `height`, and an 
 object for other options.  If you are not piping another stream into this one that has these
@@ -34,7 +34,7 @@ The height of a single frame of the image.
 A string representing the color space of the image. Examples include 'rgb', 'rgba', and 'gray'.
 It is set to `rgb` by default.
 
-### addFrame(frame)
+### `addFrame(frame)`
 
 This method adds a frame metadata object describing the characteristics of a frame in an
 animated image. This does not include the actual pixel data for the frame, which is written
