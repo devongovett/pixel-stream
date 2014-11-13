@@ -104,10 +104,13 @@ The following example converts RGB images to grayscale.
 
 ```javascript
 var PixelStream = require('pixel-stream');
+var inherits = require('util').inherits;
 
 function MyPixelStream() {
   PixelStream.apply(this, arguments);
 }
+
+inherits(MyPixelStream, PixelStream);
 
 MyPixelStream.prototype._writePixels = function(data, done) {
   if (this.colorSpace !== 'rgb')
