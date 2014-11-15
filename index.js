@@ -89,6 +89,11 @@ PixelStream.prototype._transform = function(data, encoding, done) {
         var frame = self._frameQueue.shift() || {};
         self._startFrame(frame, function(err) {
           if (err) return done(err);
+          
+          // if the frame object has width and height
+          // properties, recompute the frame size.
+          if (frame.width && frame.height)
+            self._frameSize = frame.width * frame.height * components[self.colorSpace];
         
           self.emit('frame', frame);
           self._state = FRAME_DATA;
