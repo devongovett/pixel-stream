@@ -30,7 +30,7 @@ function PixelStream(width, height, opts) {
   
   this.width = width || 0;
   this.height = height || 0;
-  this.colorSpace = (opts && opts.colorSpace) || 'rgb';
+  this.colorSpace = (opts && opts.colorSpace) || this.colorSpace || 'rgb';
   this._frameSize = this.width * this.height * components[this.colorSpace];
   
   this._consumed = 0;
