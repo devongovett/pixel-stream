@@ -1,6 +1,6 @@
 {
   "name": "pixel-stream",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A base transform stream for image pixel data",
   "main": "index.js",
   "scripts": {
