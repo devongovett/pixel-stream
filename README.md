@@ -19,20 +19,13 @@ frame of data (as in an animated image), and the `PixelStream` will handle this 
 The constructor for a `PixelStream` accepts three optional arguments: `width`, `height`, and an 
 object for other options.  If you are not piping another stream into this one that has these
 properties, `width` and `height` are required.  One additional option handled by the `PixelStream`
-base class is `colorSpace`, described below, which is set to 'rgb' by default.
+base class is `colorSpace`, described below, which is set to 'rgb' by default. Other options can
+be handled by subclasses.
 
-### `width`
+### `format`
 
-The width of a single frame of the image.
-
-### `height`
-
-The height of a single frame of the image.
-
-### `colorSpace`
-
-A string representing the color space of the image. Examples include 'rgb', 'rgba', and 'gray'.
-It is set to `rgb` by default.
+An object describing characteristics about the image, such as its `width`, `height`,
+`colorSpace` (e.g. rgb, rgba, gray, cmyk, etc.), and other properties.
 
 ### `addFrame(frame)`
 
@@ -46,7 +39,8 @@ passed on to `PixelStream`s further down the pipes by emitting `frame` events (d
 
 If this event is emitted by a source stream (e.g. image decoder), which is then piped to a 
 `PixelStream`, the `PixelStream` will use this opportunity to learn about the above image
-characteristics from the source stream automatically.
+characteristics from the source stream automatically. A format object, as described above,
+should be passed as an argument to the event.
 
 ```javascript
 fs.createReadStream('in.png')
