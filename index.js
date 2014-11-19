@@ -3,7 +3,7 @@ var PassThrough = require('stream').PassThrough;
 var util = require('util');
 
 // color space component counts
-var components = {
+var COMPONENTS = {
   'rgb': 3,
   'rgba': 4,
   'cmyk': 4,
@@ -28,29 +28,28 @@ function PixelStream(width, height, opts) {
     width = height = 0;
   }
   
-  this.width = width || 0;
-  this.height = height || 0;
-  this.colorSpace = (opts && opts.colorSpace) || this.colorSpace || 'rgb';
-  this._frameSize = this.width * this.height * components[this.colorSpace];
+  this.format = {
+    width: width || 0,
+    height: height || 0,
+    colorSpace: 'rgb'
+  };
   
+  if (typeof opts === 'object') {
+    for (var key in opts)
+      this.format[key] = opts[key];
+  }
+    
   this._consumed = 0;
   this._state = START;
   this._frameQueue = [];
+  
   var self = this;
-    
   this.once('pipe', function(src) {
-    function update() {
-      if (src.width && src.height) {
-        self.width = src.width;
-        self.height = src.height;
-        self.colorSpace = src.colorSpace || 'rgb';
-        self._frameSize = src.width * src.height * components[self.colorSpace];
-        self.emit('format', src);
-      }
-    }
-    
-    src.once('format', update);
-    update();
+    src.on('format', function(format) {      
+      // extend the frame object
+      for (var key in format)
+        self.format[key] = format[key]
+    });
     
     src.on('frame', this.addFrame.bind(this));
   });
@@ -77,8 +76,15 @@ PixelStream.prototype._transform = function(data, encoding, done) {
   function write(data) {    
     switch (self._state) {
       case START:
-        self._start(function(err) {
+        // compute the byte size of a single frame
+        self._frameSize = self.format.width * self.format.height * COMPONENTS[self.format.colorSpace];
+        
+        self._start(self.format, function(err) {
           if (err) return done(err);
+          
+          // emit format object for streams further down the pipes
+          self.emit('format', self.format);
+          
           self._state = FRAME_START;
           write(data);
         });
@@ -91,10 +97,11 @@ PixelStream.prototype._transform = function(data, encoding, done) {
         // if the frame object has width and height
         // properties, recompute the frame size.
         if (frame.width && frame.height)
-          self._frameSize = frame.width * frame.height * components[self.colorSpace];
+          self._frameSize = frame.width * frame.height * COMPONENTS[self.format.colorSpace];
         
         self._startFrame(frame, function(err) {
           if (err) return done(err);
+        
           self.emit('frame', frame);
           self._state = FRAME_DATA;
           write(data);
@@ -154,7 +161,7 @@ PixelStream.prototype._flush = function(done) {
  * Called before the start of the first frame.
  * Implementations should the callback when done.
  */
-PixelStream.prototype._start = function(done) {
+PixelStream.prototype._start = function(format, done) {
   done();
 };
 

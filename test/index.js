@@ -7,46 +7,94 @@ describe('pixel-stream', function() {
   describe('constructor', function() {
     it('should allow optional width and height', function() {    
       var s = new PixelStream(100, 100);
-      assert.equal(s.width, 100);
-      assert.equal(s.height, 100);
+      assert.deepEqual(s.format, {
+        width: 100,
+        height: 100,
+        colorSpace: 'rgb'
+      });
     });
-  
-    it('should default to rgb color space', function() {
-      var s = new PixelStream;
-      assert.equal(s.colorSpace, 'rgb');
-    });
-  
+    
     it('should allow colorSpace option', function() {
       var s = new PixelStream({ colorSpace: 'rgba' });
-      assert.equal(s.colorSpace, 'rgba');
+      assert.deepEqual(s.format, {
+        width: 0,
+        height: 0,
+        colorSpace: 'rgba'
+      });
+    });
+    
+    it('should allow any other options', function() {
+      var s = new PixelStream({ foo: 2, bar: 'hi' });
+      assert.deepEqual(s.format, {
+        width: 0,
+        height: 0,
+        colorSpace: 'rgb',
+        foo: 2,
+        bar: 'hi'
+      });
     });
   
     it('should allow both size and options', function() {
       var s = new PixelStream(100, 100, { colorSpace: 'rgba' });
-      assert.equal(s.width, 100);
-      assert.equal(s.height, 100);
-      assert.equal(s.colorSpace, 'rgba');
+      assert.deepEqual(s.format, {
+        width: 100,
+        height: 100,
+        colorSpace: 'rgba'
+      });
     });
     
     it('should compute frame size', function() {
-      var s = new PixelStream(100, 100);
+      function TestPixelStream() {
+        PixelStream.apply(this, arguments);
+      }
+      inherits(TestPixelStream, PixelStream);
+
+      TestPixelStream.prototype._writePixels = function(data, done) {
+        done();
+      };
+      
+      var s = new TestPixelStream(100, 100);
+      s.end(new Buffer(100 * 100 * 3 * 2));
+      
       assert.equal(s._frameSize, 100 * 100 * 3);
     });
     
     it('should compute frame size for another color space', function() {
-      var s = new PixelStream(100, 100, { colorSpace: 'graya' });
+      function TestPixelStream() {
+        PixelStream.apply(this, arguments);
+      }
+      inherits(TestPixelStream, PixelStream);
+
+      TestPixelStream.prototype._writePixels = function(data, done) {
+        done();
+      };
+      
+      var s = new TestPixelStream(100, 100, { colorSpace: 'graya' });
+      s.end(new Buffer(100 * 100 * 2 * 2));
+      
       assert.equal(s._frameSize, 100 * 100 * 2);
     });
     
     it('should receive and update from format events of piped source', function(done) {
       var p = new PassThrough;
-      var s = new PixelStream;
+      function TestPixelStream() {
+        PixelStream.apply(this, arguments);
+      }
+      inherits(TestPixelStream, PixelStream);
+
+      TestPixelStream.prototype._writePixels = function(data, done) {
+        done();
+      };
+      
+      var s = new TestPixelStream;
       
       // should forward format event
       s.on('format', function() {
-        assert.equal(s.width, 200);
-        assert.equal(s.height, 100);
-        assert.equal(s.colorSpace, 'rgba');
+        assert.deepEqual(s.format, {
+          width: 200,
+          height: 100,
+          colorSpace: 'rgba'
+        });
         assert.equal(s._frameSize, 200 * 100 * 4);
         done();
       });
@@ -54,32 +102,14 @@ describe('pixel-stream', function() {
       p.pipe(s);
       
       // didn't update yet
-      assert.equal(s.width, 0);
-      
-      p.width = 200;
-      p.height = 100;
-      p.colorSpace = 'rgba';
-      p.emit('format');
-    });
-    
-    it('should update when piped if format already emitted', function(done) {
-      var p = new PassThrough;
-      var s = new PixelStream;
-      
-      p.width = 200;
-      p.height = 100;
-      p.colorSpace = 'rgba';
-      
-      // should forward format event
-      s.on('format', function() {
-        assert.equal(s.width, 200);
-        assert.equal(s.height, 100);
-        assert.equal(s.colorSpace, 'rgba');
-        assert.equal(s._frameSize, 200 * 100 * 4);
-        done();
+      assert.equal(s.format.width, 0);
+      p.emit('format', {
+        width: 200,
+        height: 100,
+        colorSpace: 'rgba'
       });
       
-      p.pipe(s);
+      p.end(new Buffer(200 * 100 * 4 * 2));
     });
   });
   
@@ -145,7 +175,14 @@ describe('pixel-stream', function() {
       }
       inherits(TestPixelStream, PixelStream);
       
-      TestPixelStream.prototype._start = function(done) {
+      TestPixelStream.prototype._start = function(format, done) {
+        assert.equal(format, this.format);
+        assert.deepEqual(format, {
+          width: 10,
+          height: 10,
+          colorSpace: 'rgb'
+        });
+        
         this.ops.push('start');
         done();
       };
@@ -210,7 +247,7 @@ describe('pixel-stream', function() {
       }
       inherits(TestPixelStream, PixelStream);
       
-      TestPixelStream.prototype._start = function(done) {
+      TestPixelStream.prototype._start = function(format, done) {
         this.ops.push('start');
         setTimeout(done, Math.random() * 10);
       };
@@ -333,11 +370,14 @@ describe('pixel-stream', function() {
       
       var s = new TestPixelStream;
       var p = new PassThrough;
-      p.width = 10;
-      p.height = 10;
-      p.colorSpace = 'rgb';
       
       p.pipe(s);
+      
+      p.emit('format', {
+        width: 10,
+        height: 10,
+        colorSpace: 'rgb'
+      });
       
       p.emit('frame', { index: 0 });
       p.emit('frame', { index: 1 });
@@ -377,7 +417,7 @@ describe('pixel-stream', function() {
       }
       inherits(TestPixelStream, PixelStream);
       
-      TestPixelStream.prototype._start = function(done) {
+      TestPixelStream.prototype._start = function(format, done) {
         this.ops.push('start');
         done();
       };
