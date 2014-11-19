@@ -18,5 +18,8 @@
   "homepage": "https://github.com/devongovett/pixel-stream",
   "devDependencies": {
     "mocha": "^2.0.1"
+  },
+  "dependencies": {
+    "shallow-copy": "0.0.1"
   }
 }

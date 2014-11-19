@@ -1,6 +1,7 @@
 var Transform = require('stream').Transform;
 var PassThrough = require('stream').PassThrough;
 var util = require('util');
+var copy = require('shallow-copy');
 
 // color space component counts
 var COMPONENTS = {
@@ -78,6 +79,7 @@ PixelStream.prototype._transform = function(data, encoding, done) {
       case START:
         // compute the byte size of a single frame
         self._frameSize = self.format.width * self.format.height * COMPONENTS[self.format.colorSpace];
+        self._inputFormat = copy(self.format);
         
         self._start(function(err) {
           if (err) return done(err);
@@ -97,7 +99,7 @@ PixelStream.prototype._transform = function(data, encoding, done) {
         // if the frame object has width and height
         // properties, recompute the frame size.
         if (frame.width && frame.height)
-          self._frameSize = frame.width * frame.height * COMPONENTS[self.format.colorSpace];
+          self._frameSize = frame.width * frame.height * COMPONENTS[self._inputFormat.colorSpace];
         
         self._startFrame(frame, function(err) {
           if (err) return done(err);

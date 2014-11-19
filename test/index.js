@@ -466,5 +466,67 @@ describe('pixel-stream', function() {
         done();
       });
     });
+    
+    it('recomputes frame size from frame object correctly when input color space != output color space', function(done) {
+      function TestPixelStream() {
+        PixelStream.apply(this, arguments);
+        this.ops = [];
+        this.len = 0;
+      }
+      inherits(TestPixelStream, PixelStream);
+      
+      TestPixelStream.prototype._start = function(done) {
+        this.format.colorSpace = 'rgba';
+        this.ops.push('start');
+        done();
+      };
+      
+      TestPixelStream.prototype._startFrame = function(frame, done) {
+        assert.equal(typeof frame, 'object');
+        this.ops.push('startFrame');
+        done();
+      };
+
+      TestPixelStream.prototype._writePixels = function(data, done) {
+        this.len += data.length;
+        this.ops.push('writePixels');
+        done();
+      };
+      
+      TestPixelStream.prototype._endFrame = function(done) {
+        this.ops.push('endFrame');
+        done();
+      };
+      
+      TestPixelStream.prototype._end = function(done) {
+        this.ops.push('end');
+        done();
+      };
+      
+      var s = new TestPixelStream(10, 10);
+      
+      s.addFrame({ width: 100, height: 100 });
+      s.write(new Buffer(100 * 100 * 3));
+      assert.equal(s._frameSize, 100 * 100 * 3);
+      
+      s.addFrame({ width: 10, height: 10 });
+      s.write(new Buffer(10 * 10 * 3));
+      assert.equal(s._frameSize, 10 * 10 * 3);     
+        
+      s.end(function() {
+        assert.equal(s.len, 100 * 100 * 3 + 10 * 10 * 3);
+        assert.deepEqual(s.ops, [
+          'start',
+          'startFrame',
+          'writePixels',
+          'endFrame',
+          'startFrame',
+          'writePixels',
+          'endFrame',
+          'end'
+        ]);
+        done();
+      });
+    });
   });
 });
