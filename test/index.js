@@ -175,9 +175,8 @@ describe('pixel-stream', function() {
       }
       inherits(TestPixelStream, PixelStream);
       
-      TestPixelStream.prototype._start = function(format, done) {
-        assert.equal(format, this.format);
-        assert.deepEqual(format, {
+      TestPixelStream.prototype._start = function(done) {
+        assert.deepEqual(this.format, {
           width: 10,
           height: 10,
           colorSpace: 'rgb'
@@ -247,7 +246,7 @@ describe('pixel-stream', function() {
       }
       inherits(TestPixelStream, PixelStream);
       
-      TestPixelStream.prototype._start = function(format, done) {
+      TestPixelStream.prototype._start = function(done) {
         this.ops.push('start');
         setTimeout(done, Math.random() * 10);
       };
@@ -417,7 +416,7 @@ describe('pixel-stream', function() {
       }
       inherits(TestPixelStream, PixelStream);
       
-      TestPixelStream.prototype._start = function(format, done) {
+      TestPixelStream.prototype._start = function(done) {
         this.ops.push('start');
         done();
       };

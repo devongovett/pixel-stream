@@ -79,7 +79,7 @@ PixelStream.prototype._transform = function(data, encoding, done) {
         // compute the byte size of a single frame
         self._frameSize = self.format.width * self.format.height * COMPONENTS[self.format.colorSpace];
         
-        self._start(self.format, function(err) {
+        self._start(function(err) {
           if (err) return done(err);
           
           // emit format object for streams further down the pipes
@@ -161,7 +161,7 @@ PixelStream.prototype._flush = function(done) {
  * Called before the start of the first frame.
  * Implementations should the callback when done.
  */
-PixelStream.prototype._start = function(format, done) {
+PixelStream.prototype._start = function(done) {
   done();
 };
 
